@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Represents a game of Mastermind.
 class Mastermind
   def initialize
     @colors = %w[R G B Y]
@@ -13,7 +14,7 @@ class Mastermind
     puts
   end
 
-  def get_guess
+  def guess
     puts 'Enter your guess:'
     gets.chomp.upcase.chars
   end
@@ -24,44 +25,43 @@ class Mastermind
       return false
     end
 
-    guess.each do |color|
-      unless @colors.include?(color)
-        puts 'Please use only R, G, B, or Y.'
-        return false
-      end
+    unless valid_colors?(guess)
+      puts 'Please use only R, G, B, or Y.'
+      return false
     end
 
     true
   end
 
-  def calculate_matches(secret, guess)
+  def valid_colors?(guess)
+    guess.all? { |color| @colors.include?(color) }
+  end
+
+  def find_exact_matches(secret, guess)
     exact_matches = 0
-    wrong_position_matches = 0
     available = secret.dup
 
-    # Pass 1: Find exact matches
-    index = 0
-
-    until index == 4
+    4.times do |index|
       if secret[index] == guess[index]
         exact_matches += 1
         available.delete_at(index)
       end
-
-      index += 1
     end
 
+    [exact_matches, available]
+  end
+
+  def calculate_matches(secret, guess)
+    exact_matches, available = find_exact_matches(secret, guess)
+    wrong_position_matches = 0
+
     # Pass 2: Find wrong-position matches
-    index = 0
+    4.times do |index|
+      next unless guess[index] != secret[index] &&
+                  available.include?(guess[index])
 
-    until index == 4
-      if guess[index] != secret[index] &&
-         available.include?(guess[index])
-        wrong_position_matches += 1
-        available.delete(guess[index])
-      end
-
-      index += 1
+      wrong_position_matches += 1
+      available.delete(guess[index])
     end
 
     [exact_matches, wrong_position_matches]
